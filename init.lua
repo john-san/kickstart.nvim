@@ -468,7 +468,24 @@ require('lazy').setup({
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
       -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { 'williamboman/mason.nvim', opts = {} },
+      { 'williamboman/mason.nvim', 
+        opts = {
+          ensure_installed = {
+            "lua-language-server",
+            -- "csharp-language-server",
+            "omnisharp",
+            "xmlformatter",
+            "stylua",
+            "bicep-lsp",
+            "html-lsp",
+            "css-lsp",
+            "csharpier",
+            "prettier",
+            "json-lsp"
+          },
+          automatic_installation = true,
+        } 
+      },
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
@@ -952,7 +969,8 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 
+    'css', 'c_sharp', 'bicep' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
