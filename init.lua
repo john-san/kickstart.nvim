@@ -1033,6 +1033,10 @@ do
   -- require 'custom.plugins.colorscheme'
   -- require 'custom.plugins.ui'
   -- require 'custom.plugins.git'
+
+  -- Non-plugin settings. Loaded after the plugins so keymaps can point at them.
+  require 'custom.settings.general'
+  require 'custom.settings.navigation'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
