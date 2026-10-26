@@ -87,7 +87,7 @@ and Node.js.
 | `<leader>D…` | database drawer; `<leader>Dr` runs the query/selection in a `.sql` buffer |
 | `<leader>n…` | notes (only when `~/notes` exists) |
 | `<leader>l…` | LSP restart/info, Mason, plugin updates |
-| `<leader>tf` `tW` `ts` `tr` `tH` | toggle format-on-save, wrap, spell, relative numbers, hardtime |
+| `<leader>tf` `tW` `ts` `tr` | toggle format-on-save, wrap, spell, relative numbers |
 | `<A-j>` / `<A-k>` | move line or selection |
 | `<C-\>` | floating terminal (toggleterm) |
 | `<leader>z` | zen mode |
