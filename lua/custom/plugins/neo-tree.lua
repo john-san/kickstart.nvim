@@ -9,6 +9,9 @@ require('neo-tree').setup {
   close_if_last_window = true,
   popup_border_style = 'rounded',
   filesystem = {
+    -- `nvim .` shows the tree in the main window, not as a sidebar beside an empty buffer
+    -- that would need a second :q.
+    hijack_netrw_behavior = 'open_current',
     follow_current_file = { enabled = true },
     use_libuv_file_watcher = true, -- pick up changes made outside nvim (git checkout, builds)
     filtered_items = {

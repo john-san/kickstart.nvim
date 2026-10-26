@@ -10,14 +10,7 @@ require('zen-mode').setup {
   },
 }
 
--- Auto-enable Zen Mode on startup
-vim.api.nvim_create_autocmd('VimEnter', {
-  callback = function()
-    require('zen-mode').toggle()
-  end,
-})
-
--- Add keybinding to toggle Zen Mode
+-- Not enabled at startup: zen mode is a float over the real window, so :q would only close it.
 vim.keymap.set('n', '<leader>z', function()
   require('zen-mode').toggle()
 end, { desc = 'Toggle Zen Mode' })
