@@ -1,0 +1,5 @@
+# One line ending everywhere, so a clone on Windows (core.autocrlf=true) and on
+# Linux/WSL produce identical files and lockfile diffs stay clean.
+* text=auto eol=lf
+# cmd.exe misparses batch files with LF endings.
+*.cmd text eol=crlf

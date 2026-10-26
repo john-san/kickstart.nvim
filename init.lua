@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -110,7 +110,7 @@ do
   vim.o.number = true
   -- You can also add relative line numbers, to help with jumping.
   --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  vim.o.relativenumber = true
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -171,6 +171,9 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+
+  -- Personal options on top of the above
+  require 'custom.settings.options'
 end
 
 -- ============================================================
@@ -319,8 +322,8 @@ do
   })
 end
 
----Because most plugins are hosted on GitHub, you can use the helper
----function to have less repetition in the following sections.
+--- Because most plugins are hosted on GitHub, you can use the helper
+--- function to have less repetition in the following sections.
 ---@param repo string
 ---@return string
 local function gh(repo) return 'https://github.com/' .. repo end
@@ -423,18 +426,10 @@ do
   -- change the command under that to load whatever the name of that colorscheme is.
   --
   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-  vim.pack.add { gh 'folke/tokyonight.nvim' }
-  ---@diagnostic disable-next-line: missing-fields
-  require('tokyonight').setup {
-    styles = {
-      comments = { italic = false }, -- Disable italics in comments
-    },
-  }
-
-  -- Load the colorscheme here.
-  -- Like many other themes, this one has different styles, and you could load
-  -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-  vim.cmd.colorscheme 'tokyonight-night'
+  vim.pack.add { gh 'tanvirtin/monokai.nvim' }
+  local monokai = require 'monokai'
+  monokai.setup { palette = monokai.pro }
+  vim.cmd.colorscheme 'monokai'
 
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
@@ -464,14 +459,31 @@ do
       inside_next = 'ii',
     },
     n_lines = 500,
+    -- Structural objects: vaf selects a whole method, cic changes a class body.
+    -- The queries come from nvim-treesitter-textobjects (lua/custom/plugins/textobjects.lua).
+    custom_textobjects = {
+      f = require('mini.ai').gen_spec.treesitter { a = '@function.outer', i = '@function.inner' },
+      c = require('mini.ai').gen_spec.treesitter { a = '@class.outer', i = '@class.inner' },
+    },
   }
 
   -- Add/delete/replace surroundings (brackets, quotes, etc.)
+  -- Prefixed with `g` because flash.nvim owns `s` (lua/custom/plugins/flash.lua).
   --
-  -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
-  -- - sd'   - [S]urround [D]elete [']quotes
-  -- - sr)'  - [S]urround [R]eplace [)] [']
-  require('mini.surround').setup()
+  -- - gsaiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
+  -- - gsd'   - [S]urround [D]elete [']quotes
+  -- - gsr)'  - [S]urround [R]eplace [)] [']
+  require('mini.surround').setup {
+    mappings = {
+      add = 'gsa',
+      delete = 'gsd',
+      find = 'gsf',
+      find_left = 'gsF',
+      highlight = 'gsh',
+      replace = 'gsr',
+      update_n_lines = 'gsn',
+    },
+  }
 
   -- Simple and easy statusline.
   --  You could remove this setup call if you don't like it,
@@ -519,7 +531,7 @@ do
   -- Telescope picker. This is really useful to discover what Telescope can
   -- do as well as how to actually do it!
 
-  ---@type (string|vim.pack.Spec)[]
+  ---@type (string | vim.pack.Spec)[]
   local telescope_plugins = {
     gh 'nvim-lua/plenary.nvim',
     gh 'nvim-telescope/telescope.nvim',
@@ -534,13 +546,25 @@ do
   require('telescope').setup {
     -- You can put your default mappings / updates / etc. in here
     --  All the info you're looking for is in `:help telescope.setup()`
-    --
-    -- defaults = {
-    --   mappings = {
-    --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-    --   },
-    -- },
-    -- pickers = {}
+    defaults = {
+      -- --hidden finds dotfiles (.editorconfig, .github/) while .gitignore is still honoured.
+      vimgrep_arguments = { 'rg', '--color=never', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case', '--hidden', '--glob=!.git/' },
+      path_display = { 'truncate' },
+      sorting_strategy = 'ascending',
+      layout_config = { horizontal = { prompt_position = 'top', preview_width = 0.55 }, width = 0.9, height = 0.85 },
+      -- Build output and vendored code that make a .NET + Angular monorepo slow to search
+      file_ignore_patterns = { '^%.git/', 'node_modules/', '[/\\]bin[/\\]', '[/\\]obj[/\\]', '%.min%.js$', 'dist/', '%.angular/' },
+      mappings = {
+        i = {
+          ['<C-j>'] = 'move_selection_next',
+          ['<C-k>'] = 'move_selection_previous',
+        },
+      },
+    },
+    pickers = {
+      find_files = { find_command = { 'rg', '--files', '--color=never', '--hidden', '--glob=!.git/' } },
+      buffers = { sort_mru = true, ignore_current_buffer = true },
+    },
     extensions = {
       ['ui-select'] = { require('telescope.themes').get_dropdown() },
     },
@@ -728,21 +752,52 @@ do
     end,
   })
 
+  -- JSON/YAML schema catalog, read by jsonls and yamlls below
+  vim.pack.add { gh 'b0o/SchemaStore.nvim' }
+
   -- Enable the following language servers
   --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    -- clangd = {},
-    -- gopls = {},
-    -- pyright = {},
-    -- tsc = {},
-    --
-    -- Some languages (like rust) have entire language plugins that can be useful:
-    --    https://github.com/mrcjkb/rustaceanvim
-    --
-    -- But for many setups, the LSP (`rust_analyzer`) will work just fine
-    -- rust_analyzer = {},
+    -- C#. Long config with known gaps; read the file before changing it.
+    omnisharp = require 'custom.lsp.omnisharp',
+
+    -- vtsls wraps tsserver and is faster than ts_ls in large Angular workspaces.
+    vtsls = {
+      settings = {
+        typescript = {
+          updateImportsOnFileMove = { enabled = 'always' },
+          inlayHints = {
+            parameterNames = { enabled = 'literals' },
+            parameterTypes = { enabled = true },
+            propertyDeclarationTypes = { enabled = true },
+            functionLikeReturnTypes = { enabled = true },
+            enumMemberValues = { enabled = true },
+          },
+          preferences = { importModuleSpecifier = 'shortest' },
+        },
+        vtsls = { experimental = { completion = { enableServerSideFuzzyMatch = true } } },
+      },
+    },
+    angularls = require 'custom.lsp.angularls',
+    html = {},
+    cssls = {},
+
+    -- Schema-aware validation/completion for package.json, tsconfig, appsettings, pipelines, ...
+    jsonls = { settings = { json = { schemas = require('schemastore').json.schemas(), validate = { enable = true } } } },
+    yamlls = {
+      settings = {
+        yaml = {
+          schemaStore = { enable = false, url = '' }, -- SchemaStore.nvim supplies the catalog instead
+          schemas = require('schemastore').yaml.schemas(),
+          keyOrdering = false,
+        },
+      },
+    },
+
+    -- SQL deliberately has no server: sqlls/sqls parse ANSI SQL and flag valid T-SQL.
+    -- Schema-aware completion comes from vim-dadbod-completion (lua/custom/plugins/database.lua).
 
     stylua = {}, -- Used to format Lua code
 
@@ -821,31 +876,54 @@ end
 do
   -- [[ Formatting ]]
   vim.pack.add { gh 'stevearc/conform.nvim' }
+  local is_windows = vim.fn.has 'win32' == 1
+
   require('conform').setup {
     notify_on_error = false,
+    -- Formats every filetype listed below. Toggle with <leader>tf or :FormatDisable[!].
     format_on_save = function(bufnr)
-      -- You can specify filetypes to autoformat on save here:
-      local enabled_filetypes = {
-        -- lua = true,
-        -- python = true,
-      }
-      if enabled_filetypes[vim.bo[bufnr].filetype] then
-        return { timeout_ms = 500 }
-      else
-        return nil
-      end
+      if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then return nil end
+      -- Never reformat files opened from package or build output folders.
+      local name = vim.api.nvim_buf_get_name(bufnr)
+      if name:match 'node_modules' or name:match '[/\\]obj[/\\]' or name:match '[/\\]bin[/\\]' then return nil end
+      return { timeout_ms = 3000 } -- CSharpier is slow on a cold start
     end,
     default_format_opts = {
       lsp_format = 'fallback', -- Use external formatters if configured below, otherwise use LSP formatting. Set to `false` to disable LSP formatting entirely.
     },
-    -- You can also specify external formatters in here.
+    formatters = {
+      -- conform's bundled recipe targets CSharpier 0.x (`dotnet-csharpier`); 1.x renamed the CLI.
+      csharpier = {
+        command = 'csharpier',
+        args = { 'format', '--write-stdout', '--stdin-path', '$FILENAME' },
+        stdin = true,
+      },
+      -- Prefer the repo's own pinned prettier. On Windows the bare `prettier` is a PowerShell
+      -- script that vim.system() cannot run, so the .cmd shim is used.
+      prettier = {
+        command = function(_, ctx)
+          local bin = is_windows and 'prettier.cmd' or 'prettier'
+          local found = vim.fs.find('node_modules/.bin/' .. bin, { upward = true, path = ctx.dirname, type = 'file' })[1]
+          return found or bin
+        end,
+      },
+    },
     formatters_by_ft = {
-      -- rust = { 'rustfmt' },
-      -- Conform can also run multiple formatters sequentially
-      -- python = { "isort", "black" },
-      --
-      -- You can use 'stop_after_first' to run the first available formatter from the list
-      -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      lua = { 'stylua' },
+      cs = { 'csharpier' },
+      typescript = { 'prettier' },
+      typescriptreact = { 'prettier' },
+      javascript = { 'prettier' },
+      javascriptreact = { 'prettier' },
+      html = { 'prettier' },
+      htmlangular = { 'prettier' },
+      css = { 'prettier' },
+      scss = { 'prettier' },
+      json = { 'prettier' },
+      jsonc = { 'prettier' },
+      yaml = { 'prettier' },
+      markdown = { 'prettier' },
+      -- No T-SQL formatter: none handles SQL Server syntax without mangling procedural code.
     },
   }
 
@@ -868,8 +946,8 @@ do
   --    See the README about individual language/framework/plugin snippets:
   --    https://github.com/rafamadriz/friendly-snippets
   --
-  -- vim.pack.add { gh 'rafamadriz/friendly-snippets' }
-  -- require('luasnip.loaders.from_vscode').lazy_load()
+  vim.pack.add { gh 'rafamadriz/friendly-snippets' }
+  require('luasnip.loaders.from_vscode').lazy_load()
 
   -- [[ Autocomplete Engine ]]
   vim.pack.add { { src = gh 'saghen/blink.cmp', version = vim.version.range '1.*' } }
@@ -915,7 +993,12 @@ do
     },
 
     sources = {
-      default = { 'lsp', 'path', 'snippets' },
+      default = { 'lsp', 'path', 'snippets', 'buffer' },
+      -- Table and column names from the live connection (lua/custom/plugins/database.lua)
+      per_filetype = { sql = { 'dadbod', 'snippets', 'buffer' } },
+      providers = {
+        dadbod = { name = 'Dadbod', module = 'vim_dadbod_completion.blink' },
+      },
     },
 
     snippets = { preset = 'luasnip' },
@@ -947,26 +1030,42 @@ do
   -- NOTE: You can also specify a branch or a specific commit
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
+  -- Parsers are compiled by the tree-sitter CLI through Rust's `cc` crate, which honours $CC.
+  -- Without MSVC, use zig via scripts/zig-cc.cmd: zig rejects the `x86_64-pc-windows-msvc` target
+  -- the CLI passes, and its own windows-gnu target needs no Visual Studio libraries.
+  if vim.fn.has 'win32' == 1 and not vim.env.CC and vim.fn.executable 'cl' == 0 and vim.fn.executable 'zig' == 1 then
+    vim.env.CC = vim.fs.joinpath(vim.fn.stdpath 'config', 'scripts', 'zig-cc.cmd')
+  end
+
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = {
+    'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc',
+    'c_sharp', 'xml', 'sql', 'powershell',
+    'typescript', 'tsx', 'javascript', 'angular', 'css', 'scss',
+    'json', 'yaml', 'toml', 'regex', 'gitcommit',
+  }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
   ---@param language string
   local function treesitter_try_attach(buf, language)
-    -- Check if a parser exists and load it
-    if not vim.treesitter.language.add(language) then return end
-
     -- Check if the buffer is valid (might not be after install completes)
     if not vim.api.nvim_buf_is_valid(buf) then return end
+
+    -- Very large files (generated SQL, minified JS) stay on regex highlighting, which is faster.
+    local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
+    if ok and stats and stats.size > 200 * 1024 then return end
+
+    -- Check if a parser exists and load it
+    if not vim.treesitter.language.add(language) then return end
 
     -- Enable syntax highlighting and other treesitter features
     vim.treesitter.start(buf, language)
 
-    -- Enable treesitter based folds
+    -- Enable treesitter based folds (they start open: foldlevel=99 in custom/settings/options.lua)
     -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
+    vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+    vim.wo.foldmethod = 'expr'
 
     -- Check if treesitter indentation is available for this language, and if so enable it
     -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
@@ -1014,11 +1113,11 @@ do
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  require 'kickstart.plugins.debug'
+  -- require 'kickstart.plugins.debug' -- Go-only example; it retries installing delve every launch without Go
   require 'kickstart.plugins.indent_line'
   require 'kickstart.plugins.lint'
   require 'kickstart.plugins.autopairs'
-  require 'kickstart.plugins.neo-tree'
+  -- require 'kickstart.plugins.neo-tree' -- replaced by lua/custom/plugins/neo-tree.lua
 
   -- NOTE: You can add your own plugins, configuration, etc. in `lua/custom/plugins/*.lua`.
   --
@@ -1033,6 +1132,13 @@ do
   -- require 'custom.plugins.colorscheme'
   -- require 'custom.plugins.ui'
   -- require 'custom.plugins.git'
+
+  -- Non-plugin settings. Loaded after the plugins so keymaps can point at them.
+  require 'custom.settings.general'
+  require 'custom.settings.navigation'
+  require 'custom.settings.keymaps'
+  require 'custom.settings.autocmds'
+  require 'custom.settings.commands'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
