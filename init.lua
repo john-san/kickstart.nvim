@@ -171,6 +171,9 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+
+  -- Personal options on top of the above
+  require 'custom.settings.options'
 end
 
 -- ============================================================
@@ -1037,6 +1040,9 @@ do
   -- Non-plugin settings. Loaded after the plugins so keymaps can point at them.
   require 'custom.settings.general'
   require 'custom.settings.navigation'
+  require 'custom.settings.keymaps'
+  require 'custom.settings.autocmds'
+  require 'custom.settings.commands'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
