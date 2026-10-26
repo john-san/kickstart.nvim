@@ -1031,9 +1031,11 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Parsers are compiled by the tree-sitter CLI through Rust's `cc` crate, which honours $CC.
-  -- On a Windows box with no MSVC C++ tools, fall back to zig as the C compiler.
-  -- UNVERIFIED: if parser installs fail, install VS "Desktop development with C++" and delete this.
-  if vim.fn.has 'win32' == 1 and not vim.env.CC and vim.fn.executable 'cl' == 0 and vim.fn.executable 'zig' == 1 then vim.env.CC = 'zig cc' end
+  -- Without MSVC, use zig via scripts/zig-cc.cmd: zig rejects the `x86_64-pc-windows-msvc` target
+  -- the CLI passes, and its own windows-gnu target needs no Visual Studio libraries.
+  if vim.fn.has 'win32' == 1 and not vim.env.CC and vim.fn.executable 'cl' == 0 and vim.fn.executable 'zig' == 1 then
+    vim.env.CC = vim.fs.joinpath(vim.fn.stdpath 'config', 'scripts', 'zig-cc.cmd')
+  end
 
   -- Ensure basic parsers are installed
   local parsers = {

@@ -99,6 +99,5 @@ and Node.js.
   `docs/omnisharp-monorepo.md` section 8 for roslyn.nvim, the alternative.
 - **Debugging .NET Framework 4.8** stays in Visual Studio: the usual Neovim .NET
   debugger (netcoredbg) does not support it.
-- **Parser compilation on Windows** uses zig through `$CC` when no MSVC is found. If
-  parsers fail to build, install Visual Studio's "Desktop development with C++"
-  workload and remove the `CC` line in `init.lua` SECTION 9.
+- **Parser compilation on Windows** uses zig through `scripts/zig-cc.cmd` when no MSVC
+  is on PATH. The first build takes a few minutes while zig compiles its C runtime.
