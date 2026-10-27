@@ -1139,6 +1139,7 @@ do
   require 'custom.settings.keymaps'
   require 'custom.settings.autocmds'
   require 'custom.settings.commands'
+  require('drill').setup()
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
