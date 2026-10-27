@@ -54,6 +54,15 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   end,
 })
 
+-- 'autoread' (on by default) only reloads when Neovim checks the file; this checks on focus/buffer switch.
+-- Skipped in the cmdline window, where :checktime raises E11.
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter' }, {
+  group = augroup 'reload-changed-files',
+  callback = function()
+    if vim.fn.getcmdwintype() == '' then vim.cmd 'checktime' end
+  end,
+})
+
 vim.api.nvim_create_autocmd('FileType', {
   group = augroup 'close-with-q',
   pattern = { 'help', 'qf', 'man', 'checkhealth' },
