@@ -3,7 +3,7 @@
 --
 -- Leader groups used on top of kickstart's (s, t, h, gr):
 --   <leader>x  trouble   <leader>l  lsp / plugins   <leader>D  database
---   <leader>n  notes     gs         surround (flash owns `s`)
+--   <leader>n  notes     <leader>c  claude code     gs         surround (flash owns `s`)
 local map = vim.keymap.set
 
 require('which-key').add {
@@ -11,6 +11,7 @@ require('which-key').add {
   { '<leader>l', group = '[L]SP / plugins' },
   { '<leader>D', group = '[D]atabase' },
   { '<leader>n', group = '[N]otes' },
+  { '<leader>c', group = '[C]laude Code', mode = { 'n', 'x' } },
   { 'gs', group = '[S]urround', mode = { 'n', 'x' } },
 }
 

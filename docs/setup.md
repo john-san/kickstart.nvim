@@ -86,6 +86,7 @@ and Node.js.
 | `<leader>x…` | Trouble: diagnostics, symbols, TODOs |
 | `<leader>D…` | database drawer; `<leader>Dr` runs the query/selection in a `.sql` buffer |
 | `<leader>n…` | notes (only when `~/notes` exists) |
+| `<leader>c…` | Claude Code in a tmux pane (connect with `/ide`): `ck` ask, `cf` focus pane, `cs` send selection, `cb` add buffer, `ca`/`cd` accept/deny diff |
 | `<leader>l…` | LSP restart/info, Mason, plugin updates |
 | `<leader>tf` `tW` `ts` `tr` | toggle format-on-save, wrap, spell, relative numbers |
 | `<A-j>` / `<A-k>` | move line or selection |
