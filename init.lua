@@ -232,10 +232,17 @@ do
   --  Use CTRL+<hjkl> to switch between windows
   --
   --  See `:help wincmd` for a list of all window commands
-  vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-  vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-  vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-  vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+  -- At an edge, wrap around to the farthest window on the other side; <C-w>hjkl wrap the same way.
+  for dir, spec in pairs { h = { 'l', 'left' }, l = { 'h', 'right' }, j = { 'k', 'lower' }, k = { 'j', 'upper' } } do
+    local opposite, name = spec[1], spec[2]
+    local function wrap()
+      local win = vim.api.nvim_get_current_win()
+      vim.cmd.wincmd(dir)
+      if vim.api.nvim_get_current_win() == win then vim.cmd('999wincmd ' .. opposite) end
+    end
+    vim.keymap.set('n', '<C-' .. dir .. '>', wrap, { desc = 'Move focus to the ' .. name .. ' window (wraps)' })
+    vim.keymap.set('n', '<C-w>' .. dir, wrap, { desc = 'Move focus to the ' .. name .. ' window (wraps)' })
+  end
 
   -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
   -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
