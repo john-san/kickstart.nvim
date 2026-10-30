@@ -38,6 +38,16 @@ map('n', '<C-Right>', '<cmd>vertical resize +2<CR>', { desc = 'Grow window width
 map('n', '<leader>-', '<C-w>s', { desc = 'Split below' })
 map('n', '<leader>|', '<C-w>v', { desc = 'Split right' })
 
+-- 'scrollbind' only follows the focused window, so the wheel over an unfocused diff pane
+-- scrolled it alone. Focus that pane first so both sides of a diff move together.
+for _, wheel in ipairs { '<ScrollWheelUp>', '<ScrollWheelDown>' } do
+  map('n', wheel, function()
+    local win = vim.fn.getmousepos().winid
+    if win ~= 0 and vim.wo[win].diff then vim.api.nvim_set_current_win(win) end
+    vim.api.nvim_feedkeys(vim.keycode(wheel), 'n', false)
+  end, { desc = 'Scroll; focus the diff pane under the mouse first' })
+end
+
 -- kickstart's <leader>sc is commands, so git pickers take the capitals.
 map('n', '<leader>sG', function() require('telescope.builtin').git_status() end, { desc = '[S]earch [G]it status' })
 map('n', '<leader>sC', function() require('telescope.builtin').git_commits() end, { desc = '[S]earch git [C]ommits' })

@@ -405,6 +405,57 @@ do
     end,
   }
 
+  -- Review every changed file side by side, like a PR's "Files changed" tab.
+  -- Inside it: <Tab>/<S-Tab> next/prev file, ]c/[c next/prev change, - stage/unstage file.
+  vim.pack.add { gh 'sindrets/diffview.nvim' }
+  -- psmux's prefix is Ctrl+B, so the panels' default <C-b>/<C-f> scroll keys never reach Neovim.
+  local diffview_actions = require 'diffview.actions'
+  local panel_scroll = {
+    { 'n', '<C-d>', diffview_actions.scroll_view(0.5), { desc = 'Scroll the diff down' } },
+    { 'n', '<C-u>', diffview_actions.scroll_view(-0.5), { desc = 'Scroll the diff up' } },
+  }
+  require('diffview').setup {
+    -- Any git command in the worktree (Claude, other sessions) rewrites the index; the refresh that
+    -- triggered could destroy a staged-file buffer mid-load and show an empty, all-red side. R refreshes.
+    watch_index = false,
+    -- Vim colors lines missing from the other side as DiffAdd (green), even in the old file; show them red.
+    enhanced_diff_hl = true,
+    keymaps = {
+      file_panel = vim.list_extend({
+        { 'n', '<CR>', diffview_actions.focus_entry, { desc = 'Open the diff and focus the new file' } },
+      }, panel_scroll),
+      file_history_panel = panel_scroll,
+    },
+    hooks = {
+      -- Diff mode turns 'wrap' off, so wrap has to be set again each time a diff pane opens.
+      diff_buf_win_enter = function(_, winid)
+        vim.wo[winid].wrap = true
+        vim.wo[winid].linebreak = true
+      end,
+    },
+  }
+  -- Diffview has no hook for this; file_open_new fires once per file, after both sides are loaded,
+  -- so revisiting a file keeps your place. Line 1 is checked first because ]c skips a change there.
+  -- Opening a view focuses the panel before the first file loads, so focus moves once that file is in.
+  local focus_first_file = false
+  DiffviewGlobal.emitter:on('view_opened', function() focus_first_file = true end)
+  DiffviewGlobal.emitter:on('file_open_new', function()
+    local view = require('diffview.lib').get_current_view()
+    if not view or not view.cur_layout then return end
+    local main_win = view.cur_layout:get_main_win().id
+    vim.api.nvim_win_call(main_win, function()
+      vim.cmd 'normal! gg'
+      if vim.fn.diff_hlID(1, 1) == 0 then vim.cmd 'silent! normal! ]c' end
+    end)
+    if focus_first_file then
+      focus_first_file = false
+      vim.api.nvim_set_current_win(main_win)
+    end
+  end)
+  vim.keymap.set('n', '<leader>gd', '<cmd>DiffviewOpen<cr>', { desc = '[G]it [d]iff all changes' })
+  vim.keymap.set('n', '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', { desc = '[G]it [h]istory of this file' })
+  vim.keymap.set('n', '<leader>gq', '<cmd>DiffviewClose<cr>', { desc = '[G]it diff [q]uit' })
+
   -- Useful plugin to show you pending keybinds.
   vim.pack.add { gh 'folke/which-key.nvim' }
   require('which-key').setup {
@@ -416,6 +467,7 @@ do
       { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
       { '<leader>t', group = '[T]oggle' },
       { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
+      { '<leader>g', group = '[G]it diff' },
       { 'gr', group = 'LSP Actions', mode = { 'n' } },
     },
   }

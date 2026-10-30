@@ -17,7 +17,11 @@ return {
   -- Root on the .sln so the whole solution loads; a csproj root would load one project
   -- with no cross-project navigation.
   root_dir = function(bufnr, on_dir)
-    local dir = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
+    -- Diffview's staged-file buffers (diffview://...) aren't on disk: the search below comes back
+    -- as ".", which becomes a drive-root workspace that the LSP file watcher fails on (EPERM).
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    if bufname:match '^%w%w+://' then return end
+    local dir = vim.fs.dirname(bufname)
     local sln = vim.fs.find(function(name) return name:match '%.slnx?$' end, { upward = true, path = dir })[1]
     if sln then return on_dir(vim.fs.dirname(sln)) end
     local proj = vim.fs.find(function(name) return name:match '%.csproj$' end, { upward = true, path = dir })[1]
