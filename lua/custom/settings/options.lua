@@ -14,6 +14,8 @@ vim.o.softtabstop = 2
 
 vim.o.swapfile = false
 
+vim.opt.shortmess:append 'I' -- no intro screen on a bare `nvim`
+
 -- Treesitter folds (SECTION 9) start fully open.
 vim.o.foldlevel = 99
 
