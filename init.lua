@@ -785,7 +785,11 @@ do
     cssls = {},
 
     -- Schema-aware validation/completion for package.json, tsconfig, appsettings, pipelines, ...
-    jsonls = { settings = { json = { schemas = require('schemastore').json.schemas(), validate = { enable = true } } } },
+    -- No formatter: it is conform's fallback when prettier is missing, and it deletes blank lines between settings.
+    jsonls = {
+      init_options = { provideFormatter = false },
+      settings = { json = { schemas = require('schemastore').json.schemas(), validate = { enable = true } } },
+    },
     yamlls = {
       settings = {
         yaml = {
@@ -886,6 +890,8 @@ do
       -- Never reformat files opened from package or build output folders.
       local name = vim.api.nvim_buf_get_name(bufnr)
       if name:match 'node_modules' or name:match '[/\\]obj[/\\]' or name:match '[/\\]bin[/\\]' then return nil end
+      -- Shared config JSON is hand-laid-out; <leader>f still formats it on demand.
+      if vim.tbl_contains({ 'json', 'jsonc' }, vim.bo[bufnr].filetype) then return nil end
       return { timeout_ms = 3000 } -- CSharpier is slow on a cold start
     end,
     default_format_opts = {
