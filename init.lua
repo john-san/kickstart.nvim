@@ -460,7 +460,17 @@ do
     end
   end)
   vim.keymap.set('n', '<leader>gd', '<cmd>DiffviewOpen<cr>', { desc = '[G]it [d]iff all changes' })
-  vim.keymap.set('n', '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', { desc = '[G]it [h]istory of this file' })
+  -- Diffview uses nvim's cwd repo; a worktree file opened from the main checkout must diff its own repo.
+  local function buf_repo() return vim.fs.root(0, '.git') or vim.fn.getcwd() end
+  vim.keymap.set('n', '<leader>gb', function()
+    local root = buf_repo()
+    -- wt-start records the branch's base in .agent/meta.json; other checkouts fall back to origin's default.
+    local ok, meta = pcall(function() return vim.json.decode(table.concat(vim.fn.readfile(root .. '/.agent/meta.json'), '\n')) end)
+    vim.cmd.DiffviewOpen { args = { '-C=' .. root, 'origin/' .. (ok and meta.base or 'HEAD') .. '...HEAD' } }
+  end, { desc = '[G]it diff this [b]ranch vs its base' })
+  vim.keymap.set('n', '<leader>gh', function()
+    vim.cmd.DiffviewFileHistory { args = { '-C=' .. buf_repo(), vim.api.nvim_buf_get_name(0) } }
+  end, { desc = '[G]it [h]istory of this file' })
   vim.keymap.set('n', '<leader>gq', '<cmd>DiffviewClose<cr>', { desc = '[G]it diff [q]uit' })
 
   -- Useful plugin to show you pending keybinds.
